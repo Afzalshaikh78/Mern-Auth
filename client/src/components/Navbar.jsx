@@ -1,31 +1,30 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { assets } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import api from "../utils/api";
-import axios from "axios";
 import { toast } from "react-toastify";
 
 const Navbar = () => {
-  axios.defaults.withCredentials = true;
   const { userData, setUserData, setIsLoggedin } = useContext(AppContext);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const navigate = useNavigate();
 
   const logout = async () => {
     try {
-      axios.defaults.withCredentials = true;
       const { data } = await api.post("/api/auth/logout");
-      data.success && setIsLoggedin(false);
-      data.success && setUserData(null);
-      navigate("/");
+      if (data.success) {
+        setIsLoggedin(false);
+        setUserData(null);
+        navigate("/");
+      }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
   const sendVerifyOtp = async () => {
-    axios.defaults.withCredentials = true;
     try {
       const { data } = await api.post("/api/auth/send-verify-otp");
       if (data.success) {
@@ -35,36 +34,41 @@ const Navbar = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
   return (
-    <div className="flex justify-between items-center w-full p-4 sm:p-6 sm:px-20  absolute  top-0">
+    <div className="flex justify-between items-center w-full p-4 sm:p-6 sm:px-20 absolute top-0">
       <img className="w-28 sm:w-32" src={assets.logo} alt="" />
-      {/* {navigate to login page} */}
+
       {userData ? (
-        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-black text-white relative group">
-          {userData.name[0].toUpperCase()}
-          <div className="absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-10">
-            <div className="bg-gray-100 text-sm rounded shadow-md ">
+        <div className="relative">
+          <div
+            className="flex items-center justify-center h-8 w-8 rounded-full bg-black text-white cursor-pointer"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {userData.name[0].toUpperCase()}
+          </div>
+
+          {menuOpen && (
+            <div className="absolute top-10 right-0 bg-gray-100 text-sm rounded shadow-md">
               {!userData.isAccountVerified && (
                 <button
                   onClick={sendVerifyOtp}
-                  className="py-2 px-4 hover:bg-gray-200"
+                  className="py-2 px-4 hover:bg-gray-200 w-full text-left"
                 >
                   Verify
                 </button>
               )}
-
-              <div
+              <button
                 onClick={logout}
-                className="py-2  px-4 hover:bg-gray-200 cursor-pointer"
+                className="py-2 px-4 hover:bg-gray-200 w-full text-left"
               >
                 Logout
-              </div>
+              </button>
             </div>
-          </div>
+          )}
         </div>
       ) : (
         <button
