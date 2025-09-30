@@ -105,9 +105,6 @@ res.cookie("token", token, {
   maxAge: 24 * 60 * 60 * 1000,
 });
 
-    
-    
-
 
     return res.status(200).json({ success: true, message: "Login successful" });
   } catch (error) {
@@ -117,24 +114,22 @@ res.cookie("token", token, {
 
 export const logout = async (req, res) => {
   try {
-    // Clear the cookie named "token"
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // must be true on HTTPS
-      sameSite: "None", // required for cross-site cookies
-    });
+
+res.cookie("token", token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production", // must be true on HTTPS
+  sameSite: "None", // required for cross-site cookies
+  maxAge: 24 * 60 * 60 * 1000,
+});
+
 
     return res
       .status(200)
       .json({ success: true, message: "Logout successful" });
   } catch (error) {
-    console.error("Logout Error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const sendVerifyOtp = async (req, res) => {
   try {
