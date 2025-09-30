@@ -10,20 +10,23 @@ import userRouter from "./routes/userRoutes.js";
 const PORT = process.env.PORT || 3000;
 const app = express();
 connectDB();
-
-const allowedOrigins = [
-  "https://mern-auth-g2gy.onrender.com",
-  "http://localhost:5173", // Your frontend development server
-  "http://127.0.0.1:5173", // Alternative localhost
-];
 app.use(express.json());
 app.use(cookieParser());
+
 app.use(
   cors({
-    origin: allowedOrigins,
-    credentials: true,
+    origin: "https://mern-auth-9quf.onrender.com", // your frontend URL
+    credentials: true, // allow cookies
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // allowed HTTP methods
+    allowedHeaders: ["Content-Type", "Authorization"], // allowed headers
   })
 );
+// app.use(
+//   cors({
+//     origin: allowedOrigins,
+//     credentials: true,
+//   })
+// );
 // app.use(cors({ credentials: true, origin: true }));
 
 app.get("/", (req, res) => {
