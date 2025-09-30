@@ -11,8 +11,11 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 connectDB();
 
-const allowedOrigins = ["https://mern-auth-g2gy.onrender.com"];
-
+const allowedOrigins = [
+  "https://mern-auth-g2gy.onrender.com",
+  "http://localhost:5173", // Your frontend development server
+  "http://127.0.0.1:5173", // Alternative localhost
+];
 app.use(express.json());
 app.use(cookieParser());
 app.use(
