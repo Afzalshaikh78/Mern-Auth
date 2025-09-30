@@ -25,8 +25,8 @@ const Navbar = () => {
   };
 
   const sendVerifyOtp = async () => {
+    axios.defaults.withCredentials = true;
     try {
-      axios.defaults.withCredentials = true;
 
       const { data } = await api.post("/api/auth/send-verify-otp");
       if (data.success) {
