@@ -7,6 +7,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 const Navbar = () => {
+  axios.defaults.withCredentials = true;
   const { userData, setUserData, setIsLoggedin } = useContext(AppContext);
 
   const navigate = useNavigate();
