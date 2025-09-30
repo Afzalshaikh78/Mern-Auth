@@ -27,7 +27,6 @@ const Navbar = () => {
   const sendVerifyOtp = async () => {
     axios.defaults.withCredentials = true;
     try {
-
       const { data } = await api.post("/api/auth/send-verify-otp");
       if (data.success) {
         navigate("/email-verify");
@@ -50,12 +49,12 @@ const Navbar = () => {
           <div className="absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-10">
             <div className="bg-gray-100 text-sm rounded shadow-md ">
               {!userData.isAccountVerified && (
-                <div
+                <button
                   onClick={sendVerifyOtp}
-                  className="py-2  px-4 hover:bg-gray-200 cursor-pointer"
+                  className="py-2 px-4 hover:bg-gray-200"
                 >
                   Verify
-                </div>
+                </button>
               )}
 
               <div
