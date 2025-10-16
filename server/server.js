@@ -16,7 +16,7 @@ app.use(cookieParser());
 
 // CORS - CRITICAL CONFIGURATION
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: "https://mern-auth-client-dmw5.onrender.com",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
