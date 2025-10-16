@@ -1,18 +1,17 @@
+/* eslint-disable no-unused-vars */
 import React, { useContext } from "react";
 import { assets } from "../assets/assets";
 import { AppContext } from "../context/AppContext";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const { userData } = useContext(AppContext);
+  const navigate = useNavigate();
 
   return (
     
-      <div className="flex flex-col items-center px-4 mt-20 text-center text-gray-800">
-        <img
-          className="w-36 h-36 rounded-full mb-5"
-          src={assets.header_img}
-          alt=""
-        />
+      <div className="flex flex-col items-center px-4  text-center text-gray-800">
+ 
         <h1 className="flex items-center gap-2 text-xl font-medium mb-3 sm:text-3xl">
           Hey {userData ? userData.name : ""}!
           <img className="w-8 aspect-square" src={assets.hand_wave} alt="" />

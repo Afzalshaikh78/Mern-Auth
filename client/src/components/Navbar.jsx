@@ -1,32 +1,19 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { assets } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
-import api from "../utils/api";
 import { toast } from "react-toastify";
+import api from "../utils/api"; // ✅ Import the api instance
 
 const Navbar = () => {
-  const { userData, setUserData, setIsLoggedin } = useContext(AppContext);
-  const [menuOpen, setMenuOpen] = useState(false);
-
+  const { userData, logoutUser } = useContext(AppContext);
   const navigate = useNavigate();
-
-  const logout = async () => {
-    try {
-      const { data } = await api.post("/api/auth/logout");
-      if (data.success) {
-        setIsLoggedin(false);
-        setUserData(null);
-        navigate("/");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-    }
-  };
 
   const sendVerifyOtp = async () => {
     try {
+      // ✅ Use api instance instead of fetch
       const { data } = await api.post("/api/auth/send-verify-otp");
+
       if (data.success) {
         navigate("/email-verify");
         toast.success(data.message);
@@ -43,32 +30,29 @@ const Navbar = () => {
       <img className="w-28 sm:w-32" src={assets.logo} alt="" />
 
       {userData ? (
-        <div className="relative">
-          <div
-            className="flex items-center justify-center h-8 w-8 rounded-full bg-black text-white cursor-pointer"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {userData.name[0].toUpperCase()}
-          </div>
-
-          {menuOpen && (
-            <div className="absolute top-10 right-0 bg-gray-100 text-sm rounded shadow-md">
+        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-black text-white relative group">
+          {userData.name[0].toUpperCase()}
+          <div className="absolute hidden group-hover:block top-0 right-0 z-10 text-black rounded pt-10">
+            <div className="bg-gray-100 text-sm rounded shadow-md">
               {!userData.isAccountVerified && (
                 <button
                   onClick={sendVerifyOtp}
-                  className="py-2 px-4 hover:bg-gray-200 w-full text-left"
+                  className="py-2 px-4 hover:bg-gray-200"
                 >
                   Verify
                 </button>
               )}
-              <button
-                onClick={logout}
-                className="py-2 px-4 hover:bg-gray-200 w-full text-left"
+              <div
+                onClick={async () => {
+                  await logoutUser();
+                  navigate("/");
+                }}
+                className="py-2 px-4 hover:bg-gray-200 cursor-pointer"
               >
                 Logout
-              </button>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       ) : (
         <button

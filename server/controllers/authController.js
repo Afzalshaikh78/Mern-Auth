@@ -2,51 +2,53 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import transporter from "../configs/nodemailer.js";
-import { EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE } from "../configs/emailTemplate.js";
+import {
+  EMAIL_VERIFY_TEMPLATE,
+  PASSWORD_RESET_TEMPLATE,
+} from "../configs/emailTemplate.js";
 
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
   if (!name || !email || !password) {
-    return res.json({
+    return res.status(400).json({
+      // ✅ Added 400 status
       success: false,
       message: "Please provide all the required fields",
     });
   }
+
   try {
     const existingUser = await userModel.findOne({ email });
     if (existingUser) {
       return res
-        
+        .status(400) // ✅ Added status code
         .json({ success: false, message: "User already exists" });
     }
 
-    //ecnrypt password
+    // Encrypt password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    //create user
+    // Create user
     const user = await userModel.create({
       name,
       email,
       password: hashedPassword,
     });
 
-    //generate token
+    // Generate token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    // ✅ Fixed: "None" -> "none" (lowercase)
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ✅ lowercase
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
-res.cookie("token", token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "None" : "lax",
-  maxAge: 1000 * 60 * 60 * 24 * 7,
-});
-    //send email verification
+    // Send email verification
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
       to: email,
@@ -63,7 +65,6 @@ res.cookie("token", token, {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
-
 export const login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -80,48 +81,48 @@ export const login = async (req, res) => {
         .status(400)
         .json({ success: false, message: "User not found" });
     }
-    //compare password
+
+    // Compare password
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
       return res
-       
+        .status(400) // ✅ Added status code
         .json({ success: false, message: "Invalid password or email" });
     }
 
-    //generate token
+    // Generate token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    // ✅ FIXED: Cookie settings must match register (conditional sameSite)
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ✅ Fixed
+      maxAge: 7 * 24 * 60 * 60 * 1000, // ✅ Changed to 7 days to match JWT expiry
+    });
 
-res.cookie("token", token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production", // must be true on HTTPS
-  sameSite: "None", // required for cross-site cookies
-  maxAge: 24 * 60 * 60 * 1000,
-});
-
-    
-    
-
-
-    return res.status(200).json({ success: true, message: "Login successful" });
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+    });
   } catch (error) {
-    return res.json({ success: false, message: error.message });
+    return res.status(500).json({
+      // ✅ Added 500 status
+      success: false,
+      message: error.message,
+    });
   }
 };
-
 export const logout = async (req, res) => {
   try {
-    // Clear the cookie named "token"
+    // ✅ Clear cookie settings must match how it was set
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // must be true on HTTPS
-      sameSite: "None", // required for cross-site cookies
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ✅ Match creation
+      path: "/", // ✅ Add path
     });
 
     return res
@@ -134,7 +135,6 @@ export const logout = async (req, res) => {
       .json({ success: false, message: "Internal server error" });
   }
 };
-
 
 export const sendVerifyOtp = async (req, res) => {
   try {
@@ -159,7 +159,10 @@ export const sendVerifyOtp = async (req, res) => {
       to: user.email,
       subject: "Verify your account",
       // text: `Your OTP is: ${otp}`,
-      html: EMAIL_VERIFY_TEMPLATE.replace("{{otp}}", otp).replace("{{email}}", user.email),
+      html: EMAIL_VERIFY_TEMPLATE.replace("{{otp}}", otp).replace(
+        "{{email}}",
+        user.email
+      ),
     };
 
     await transporter.sendMail(mailOptions);
@@ -178,12 +181,10 @@ export const verifyEmail = async (req, res) => {
   const { userId } = req;
 
   if (!otp) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Please provide all the required fields",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Please provide all the required fields",
+    });
   }
   try {
     // 1. Find user
@@ -228,16 +229,15 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
-
 export const isAuthenticated = (req, res) => {
   try {
-    return res.status(200).json({ success: true, message: "Authenticated successfully!" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Authenticated successfully!" });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
-    
   }
-}
-
+};
 
 //sned password reset otp
 
@@ -246,8 +246,12 @@ export const sendResetOtp = async (req, res) => {
   if (!email) {
     return res
       .status(400)
-      .json({ success: false, message: "Please provide all the required fields" });
-  }try {
+      .json({
+        success: false,
+        message: "Please provide all the required fields",
+      });
+  }
+  try {
     const user = await userModel.findOne({ email });
     if (!user) {
       return res
@@ -268,7 +272,10 @@ export const sendResetOtp = async (req, res) => {
       to: user.email,
       subject: "Reset your password",
       // text: `Your OTP for resetting your password is: ${otp}`,
-      html: PASSWORD_RESET_TEMPLATE.replace("{{otp}}", otp).replace("{{email}}", user.email),
+      html: PASSWORD_RESET_TEMPLATE.replace("{{otp}}", otp).replace(
+        "{{email}}",
+        user.email
+      ),
     };
 
     await transporter.sendMail(mailOptions);
@@ -278,22 +285,17 @@ export const sendResetOtp = async (req, res) => {
       .json({ success: true, message: "OTP sent successfully" });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
-    
   }
-  
-}
-
+};
 
 export const resetPassword = async (req, res) => {
-  const { otp, newPassword,email } = req.body;
+  const { otp, newPassword, email } = req.body;
 
   if (!otp || !newPassword || !email) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Please provide all the required fields",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Please provide all the required fields",
+    });
   }
   try {
     // 1. Find user
@@ -314,7 +316,7 @@ export const resetPassword = async (req, res) => {
     // 3. Check OTP validity
     if (user.resetOtp !== otp || user.resetOtp === "") {
       return res.status(400).json({ success: false, message: "Invalid OTP" });
-    }  
+    }
 
     // 4. Check OTP expiry
     if (user.resetOtpExpiresAt < Date.now()) {
@@ -323,7 +325,7 @@ export const resetPassword = async (req, res) => {
         message: "OTP expired, please request a new one",
       });
     }
-    
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     user.resetOtp = ""; // clear OTP
@@ -331,9 +333,9 @@ export const resetPassword = async (req, res) => {
     // 5. Mark account verified
     user.isAccountVerified = true;
     await user.save();
-    
+
     //ecnrypt password
-    
+
     //update password
     await user.save();
 
@@ -343,4 +345,4 @@ export const resetPassword = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
-}
+};

@@ -1,11 +1,11 @@
 import axios from "axios";
 
 // Use env variable or fallback to localhost
-// const backendUrl =
-//   import.meta.env.VITE_BACKEND_URL || "https://mern-auth-g2gy.onrender.com";
+const backendUrl =
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
 const api = axios.create({
-  baseURL: "https://mern-auth-g2gy.onrender.com",
+  baseURL: backendUrl || "http://localhost:3000", 
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

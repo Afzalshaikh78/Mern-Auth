@@ -1,5 +1,4 @@
 import express from "express";
-
 import cors from "cors";
 import "dotenv/config";
 import cookieParser from "cookie-parser";
@@ -10,24 +9,26 @@ import userRouter from "./routes/userRoutes.js";
 const PORT = process.env.PORT || 3000;
 const app = express();
 connectDB();
+
+// Middleware in correct order
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(
-  cors({
-    origin: "https://mern-auth-9quf.onrender.com", // your frontend URL
-    credentials: true, // allow cookies
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // allowed HTTP methods
-    allowedHeaders: ["Content-Type", "Authorization"], // allowed headers
-  })
-);
-// app.use(
-//   cors({
-//     origin: allowedOrigins,
-//     credentials: true,
-//   })
-// );
-// app.use(cors({ credentials: true, origin: true }));
+// CORS - CRITICAL CONFIGURATION
+const corsOptions = {
+  origin: "http://localhost:5173",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+
+// Test route to verify CORS is working
+app.get("/test-cors", (req, res) => {
+  res.json({ message: "CORS is working!", timestamp: new Date() });
+});
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -38,4 +39,5 @@ app.use("/api/user", userRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`CORS enabled for: http://localhost:5173`);
 });
